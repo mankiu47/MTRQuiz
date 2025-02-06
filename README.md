@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>問答遊戲 - 港鐵知多啲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            overflow-x: hidden; /* 防止水平滾動 */
+        }
+        header {
+            background: #002954;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+            opacity: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        th {
+            background: #002954;
+            color: white;
+        }
+        td:hover {
+            background-color: #f0f0f0;
+        }
+        button {
+            background: #A90332;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #8c021f;
+        }
+        .hidden {
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #002954;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-bar div {
+            height: 100%;
+            background-color: #A90332;
+            width: 0;
+            transition: width 0.4s;
+        }
+        h2 {
+            font-size: 1.8em; /* Increase font size for sub-header */
+            line-height: 1.4; /* Add line spacing */
+        }
+        .question {
+            font-size: 1.2em; /* Increase font size for questions */
+            line-height: 1.6; /* Add line spacing */
+            font-weight: bold; /* Make questions bold */
+        }
+        @media (max-width: 600px) {
+            table, th, td {
+                font-size: 14px;
+            }
+        }
+        .white-text {
+            color: white;
+        }
+        .black-text {
+            color: black;
+        }
+        .red-text {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>港鐵知多啲</h1>
+    </header>
+    <div class="container" id="home">
+        <h2>選擇你的問題組合</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>分數</th>
+                    <th>業務</th>
+                    <th>福利</th>
+                    <th>職位</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>100</td>
+                    <td><input type="radio" name="business" data-score="100" value="Q1"> Q1</td>
+                    <td><input type="radio" name="benefits" data-score="100" value="Q2"> Q2</td>
+                    <td><input type="radio" name="positions" data-score="100" value="Q3"> Q3</td>
+                </tr>
+                <tr>
+                    <td>200</td>
+                    <td><input type="radio" name="business" data-score="200" value="Q4"> Q4</td>
+                    <td><input type="radio" name="benefits" data-score="200" value="Q5"> Q5</td>
+                    <td><input type="radio" name="positions" data-score="200" value="Q6"> Q6</td>
+                </tr>
+                <tr>
+                    <td>300</td>
+                    <td><input type="radio" name="business" data-score="300" value="Q7"> Q7</td>
+                    <td><input type="radio" name="benefits" data-score="300" value="Q8"> Q8</td>
+                    <td><input type="radio" name="positions" data-score="300" value="Q9"> Q9</td>
+                </tr>
+                <tr>
+                    <td>400</td>
+                    <td><input type="radio" name="business" data-score="400" value="Q10"> Q10</td>
+                    <td><input type="radio" name="benefits" data-score="400" value="Q11"> Q11</td>
+                    <td><input type="radio" name="positions" data-score="400" value="Q12"> Q12</td>
+                </tr>
+                <tr>
+                    <td>500</td>
+                    <td><input type="radio" name="business" data-score="500" value="Q13"> Q13</td>
+                    <td><input type="radio" name="benefits" data-score="500" value="Q14"> Q14</td>
+                    <td><input type="radio" name="positions" data-score="500" value="Q15"> Q15</td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="startQuiz">開始問答</button>
+    </div>
+
+    <div class="container hidden" id="quiz">
+        <h2>問答題目</h2>
+        <div id="progressBar" class="progress-bar"><div></div></div>
+        <div id="questionContainer"></div>
+        <button id="submitAnswers">提交答案</button>
+        <button id="goBackHome">返回首頁</button>
+    </div>
+
+    <div class="container hidden" id="results">
+        <h2>你的結果</h2>
+        <div id="resultOutput"></div>
+        <button id="retryQuiz">重試問答</button>
+    </div>
+
+    <script>
+        let visitorCount = 0;
+        const selectedQuestions = [];
+
+       const questions = {
+ Q1: {
+                question: "以下哪個是港鐵的主要業務",
+                options: [
+                    "1. 香港客運服務：負責日常車務運作",
+                    "2. 物業：負責住宅及商場項目的發展和管理",
+                    "3. 項目及工程拓展：負責新鐵路項目的營造",
+                    "4. 以上皆是"
+                ],
+                correctAnswer: "4",
+                explanation: "港鐵的主要業務包括香港客運服務、物業及項目及工程拓展。"
+            },
+            Q2: {
+                question: "港鐵全職員工可免費乘搭以下哪些「港鐵網絡」？?",
+                options: [
+                    "1. 輕鐵",
+                    "2. 港鐵巴士",  // Missing comma added here
+                    "3. 機場快線",
+                    "4. 以上皆是"
+                ],
+                correctAnswer: "4",
+                explanation: "港鐵全職員工可以免費乘搭「港鐵網絡」包括市區綫、機場快綫、東鐵綫、屯馬綫、輕鐵及港鐵巴士。"
+            },
+            Q3: {
+                question: "以下哪項是技術員/技工的維修範疇?",
+                options: [
+                    "1. 設施維修",
+                    "2. 鐵道車輛維修",
+                    "3. 基建維修",
+                    "4. 以上皆是"
+                ],
+                correctAnswer: "4",
+                explanation: "技術員 / 技工隸屬於香港客運服務業務單位，負責設施、鐵道車輛和基建的維修工作。"
+            },
+            Q4: {
+                question: "以下哪個不是港鐵管理的商場?",
+                options: [
+                    "1. The Southside (黃竹坑)",
+                    "2. 綠楊坊 (荃灣)",
+                    "3. APM (觀塘)",
+                    "4. 圍方 (大圍)"
+                ],
+                correctAnswer: "3",
+                explanation: "APM不是港鐵管理的商場。"
+            },
+            Q5: {
+                question: "以下哪項不是港鐵全職員工享有福利?",
+                options: [
+                    "1. 婚假",
+                    "2. 醫療福利（包括合資格家屬）",
+                    "3. 進修資助",
+                    "4. 免費乘搭九巴"
+                ],
+                correctAnswer: "4",
+                explanation: "免費乘搭九巴並非港鐵全職員工福利。"
+            },
+            Q6: {
+                question: "以下哪個是物業 / 商場事務主任的工作場所？",
+                options: [
+                    "1. 港鐵管理的商場和住宅",
+                    "2. 港鐵管理的商場和住宅、港鐵員工康體中心",
+                    "3. 港鐵管理的商場和住宅、港鐵車廠",
+                    "4. 港鐵管理的住宅和港鐵總部大樓"
+                ],
+                correctAnswer: "1",
+                explanation: "物業 / 商場事務主任於港鐵管理的商場和住宅處理日常客戶服務及一般文書工作。"
+            },
+            Q7: {
+                question: "以下哪一條港鐵公司參與營運的深圳地鐵線於2024年12月通車？",
+                options: [
+                    "1. 11號線",
+                    "2. 12號線",
+                    "3. 13號線",
+                    "4. 14號線"
+                ],
+                correctAnswer: "3",
+                explanation: "港鐵公司參與營運的深圳市軌道交通13號綫第一期首通段，於今2024年12月28日正式投入服務，是港鐵在深圳參與營運的第二條地鐵綫。"
+            },
+            Q8: {
+                question: "港鐵已婚員工的配偶和合資格子女可免費乘搭港鐵。未婚員工能否享有相似的福利?",
+                options: [
+                    "1. 能夠，未婚員工可提名任何一位親友享有港鐵免費乘車福利",
+                    "2. 不能夠"
+                ],
+                correctAnswer: "1",
+                explanation: "未婚員工可提名任何一位親友享有港鐵免費乘車福利。"
+            },
+            Q9: {
+                question: "以下哪個職位需持有香港駕駛執照(第一類別)？",
+                options: [
+                    "1. 輕鐵列車車長",
+                    "2. 重鐵列車車長",
+                    "3. 技術員 / 技工",
+                    "4. 工程人員"
+                ],
+                correctAnswer: "1",
+                explanation: "輕鐵列車車長需持有香港駕駛執照(第一類別)。"
+            },
+            Q10: {
+                question: "港鐵現時有多少個重鐵車站？（不包括輕鐵）?",
+                options: [
+                    "1. 95",
+                    "2. 97",
+                    "3. 98",
+                    "4. 99"
+                ],
+                correctAnswer: "4",
+                explanation: "港鐵現時有99個重鐵車站，預計於2027年落成的古洞站將會是港鐵的第100 個重鐵車站。"
+            },
+            Q11: {
+                question: "港鐵設有多少個員工康體中心？?",
+                options: [
+                    "1. 2個",
+                    "2. 3個",
+                    "3. 4個",
+                    "4. 5個"
+                ],
+                correctAnswer: "3",
+                explanation: "港鐵於九龍灣、荃灣、柴灣和火炭設有康體中心，讓員工於工作之餘，可以放鬆身心。"
+            },
+            Q12: {
+                question: "以下哪個職位可以享有入職獎金（現時為$12,000）？",
+                options: [
+                    "1. 站務主任",
+                    "2. 技術員 / 技工",
+                    "3. 物業 / 商場事務主任",
+                    "4. 以上皆是"
+                ],
+                correctAnswer: "4",
+                explanation: "入職站務主任 、技術員 / 技工及物業 / 商場事務主任均可享有入職獎金（現時為$12,000）。"
+            },
+            Q13: {
+                question: "港鐵在香港營運多少條重鐵路綫？（不包括輕鐵）?",
+                options: [
+                    "1. 9條",
+                    "2. 10條",
+                    "3. 11條",
+                    "4. 12條"
+                ],
+                correctAnswer: "1",
+                explanation: "觀塘綫、荃灣綫、港島綫、將軍澳綫、南港島綫、東涌綫、迪士尼綫、東鐵綫及屯馬綫。"
+            },
+            Q14: {
+                question: "港鐵全職員工於工作滿六個月後可享有以下哪一項福利？",
+                options: [
+                    "1. 身心健康假",
+                    "2. 合資格家屬免費乘車福利",
+                    "3. 身心健平台（員工可於平台兌換與身心健康有關的產品或服務）",
+                    "4. 以上皆是"
+                ],
+                correctAnswer: "4",
+                explanation: "港鐵全職員工於工作滿六個月後可享有以下福利： 1. 身心健康假、2. 合資格家屬免費乘車福利、3. 身心健平台。"
+            },
+            Q15: {
+                question: "以下哪一項不是港鐵列車車長日常職務？",
+                options: [
+                    "1. 負責列車投入服務前的安全操作檢查",
+                    "2. 解答乘客查詢",
+                    "3. 駕駛港鐵列車，確保列車運作安全及暢順",
+                    "4. 與車務控制中心協調，處理列車事故，並適當地操控列車"
+                ],
+                correctAnswer: "2",
+                explanation: "解答乘客查詢不是港鐵列車車長日常職務。"
+            }
+            // Add more questions here
+        };
+
+        document.getElementById('startQuiz').addEventListener('click', () => {
+            const businessSelected = document.querySelector('input[name="business"]:checked');
+            const benefitsSelected = document.querySelector('input[name="benefits"]:checked');
+            const positionsSelected = document.querySelector('input[name="positions"]:checked');
+
+            if (!businessSelected || !benefitsSelected || !positionsSelected) {
+                alert("請從每個主題中選擇一個問題。");
+                return;
+            }
+
+            selectedQuestions.push(
+                { score: businessSelected.dataset.score, theme: "業務", question: businessSelected.value },
+                { score: benefitsSelected.dataset.score, theme: "福利", question: benefitsSelected.value },
+                { score: positionsSelected.dataset.score, theme: "職位", question: positionsSelected.value }
+            );
+
+            // Transition effect
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('quiz').classList.remove('hidden');
+
+            loadQuestions();
+        });
+
+        function loadQuestions() {
+            const questionContainer = document.getElementById('questionContainer');
+            questionContainer.innerHTML = '';
+            selectedQuestions.forEach((question, index) => {
+                const questionData = questions[question.question];
+                const options = questionData.options;
+
+                questionContainer.innerHTML += `
+                    <div>
+                        <p class="question">問題 ${index + 1} (${question.theme} - ${question.score})</p>
+                        <p class="question">${questionData.question}</p>
+                        <div>
+                            ${options.map((option, i) => `
+                                <input type="radio" name="question${index}" value="${i + 1}"> ${option}<br>
+                            `).join('')}
+                        </div>
+                        <div id="feedback${index}" class="hidden"></div>
+                    </div>
+                `;
+            });
+            updateProgressBar(0);
+        }
+
+        function updateProgressBar(progress) {
+            const progressBar = document.getElementById('progressBar').children[0];
+            const totalQuestions = selectedQuestions.length;
+            progressBar.style.width = `${(progress / totalQuestions) * 100}%`;
+        }
+
+        document.getElementById('submitAnswers').addEventListener('click', () => {
+            const answers = [...document.querySelectorAll('#questionContainer input[type="radio"]:checked')];
+            let totalScore = 0;
+
+            // Check if all questions have been answered
+            if (answers.length !== selectedQuestions.length) {
+                alert("請回答所有問題。");
+                return;
+            }
+
+            // Hide submit button
+            document.getElementById('submitAnswers').classList.add('hidden');
+
+            answers.forEach((answer, index) => {
+                const questionData = questions[selectedQuestions[index].question];
+                const score = parseInt(selectedQuestions[index].score);
+                const feedback = document.getElementById(`feedback${index}`);
+
+                if (answer.value === questionData.correctAnswer) {
+                    totalScore += score;
+                    feedback.innerHTML = "正確答案!";
+                } else {
+                    feedback.innerHTML = `<span class="red-text">錯誤答案! 正確答案是：${questionData.correctAnswer}. ${questionData.explanation}</span>`;
+                }
+                feedback.classList.remove('hidden');
+            });
+
+            visitorCount++;
+            // Add a "Next" button for proceeding to the results
+            const nextButton = document.createElement('button');
+            nextButton.textContent = "檢視總分";
+            nextButton.addEventListener('click', () => {
+                document.getElementById('resultOutput').innerHTML = `<span class="black-text">你的總分：${totalScore}<br><span class="white-text">完成問答的訪問者總數：${visitorCount}</span></span>`;
+                
+                document.getElementById('quiz').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+            });
+
+            document.getElementById('questionContainer').appendChild(nextButton);
+        });
+
+        document.getElementById('retryQuiz').addEventListener('click', () => {
+            location.reload(); // Refresh the page
+        });
+
+        document.getElementById('goBackHome').addEventListener('click', () => {
+            location.reload(); // Refresh the page
+        });
+    </script>
+</body>
+</html>
