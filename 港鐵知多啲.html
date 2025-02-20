@@ -438,3 +438,24 @@
     </script>
 </body>
 </html>
+
+// Fetch the content from the provided URL
+fetch('https://mankiu47.github.io/MTRQ-A/%E6%B8%AF%E9%90%B5%E7%9F%A5%E5%A4%9A%E5%95%B2.html')
+    .then(response => response.text())
+    .then(data => {
+        // Create a blob with the content
+        const blob = new Blob([data], { type: 'text/html' });
+        // Create a link element
+        const link = document.createElement('a');
+        // Set the download attribute with a filename
+        link.download = '港鐵知多啲.html';
+        // Create a URL for the blob and set it as the href attribute
+        link.href = window.URL.createObjectURL(blob);
+        // Append the link to the body
+        document.body.appendChild(link);
+        // Programmatically click the link to trigger the download
+        link.click();
+        // Remove the link from the document
+        document.body.removeChild(link);
+    })
+    .catch(error => console.error('Error fetching the URL:', error));
